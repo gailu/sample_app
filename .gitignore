@@ -13,3 +13,9 @@
 # Ignore all logfiles and tempfiles.
 /log/*.log
 /tmp
+
+# Igone other unnedded files
+doc/
+*.swp
+*~
+bundler_stubs/
