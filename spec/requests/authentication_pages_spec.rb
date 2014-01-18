@@ -48,6 +48,9 @@ describe "Authentication" do
     describe "for non-signed-in users" do
       let(:user) {FactoryGirl.create(:user)}
 
+      it { should_not have_link('Profile', href: user_path(user)) }
+      it { should_not have_link('Settings', href: edit_user_path(user)) }
+
       describe "when attempting to visit a protected page" do
         before do
           visit edit_user_path(user)
@@ -62,7 +65,21 @@ describe "Authentication" do
             page.should have_selector('title', text: 'Edit user')
           end
         end
+
+        describe "when signing in again" do
+          before do
+            visit signin_path
+            fill_in "Email",    with: user.email
+            fill_in "Password", with: user.password
+            click_button "Sign in"
+          end
+
+          it "should render the default (profile) page" do
+            page.should have_selector('title', text: user.name)
+          end
+        end
       end
+
       describe "in the Users controller" do
 
         describe "visiting the edit page" do
@@ -105,6 +122,16 @@ describe "Authentication" do
 
       describe "submitting a DELETE request to the User#destroy action" do
         before {delete user_path(user)}
+        specify {response.should redirect_to(root_path)}
+      end
+    end
+
+    describe "as admin user" do
+      let(:admin) {FactoryGirl.create(:admin)}
+      before {sign_in admin}
+
+      describe "submitting a DELETE request to destroy self" do
+        before {delete user_path(admin)}
         specify {response.should redirect_to(root_path)}
       end
     end
