@@ -15,19 +15,37 @@ describe "Static pages" do
     let(:page_title) {''}
     it_should_behave_like "all static pages"
     it {should_not have_selector('title', text: '| Home')}
-
+    
     describe "for signed-in users" do
       let(:user) {FactoryGirl.create(:user)}
-      before do
-        FactoryGirl.create(:micropost, user: user, content: "Have fun")
-        FactoryGirl.create(:micropost, user: user, content: "Enjoy the Life")
-        sign_in user
-        visit root_path
+      before { FactoryGirl.create(:micropost, user: user,
+                                  content: "Have fun")}
+
+      describe "when single post" do
+        before do
+          sign_in user
+          visit root_path
+        end
+        it {should have_content("#{user.microposts.count} micropost")}
       end
 
-      it "should render the user's feed" do
-        user.feed.each do |item|
-          page.should have_selector("li##{item.id}", text: item.content)
+      describe "when multiple posts" do
+        before do
+          50.times {FactoryGirl.create(:micropost, 
+                          user: user, content: "Enjoy")}
+          sign_in user
+          visit root_path
+        end
+
+        it {should have_content("#{user.microposts.count} microposts")}
+
+        it {should have_selector ('div.pagination')}
+        
+        it "should render the user's feed" do
+          user.feed.paginate(page: 1).each do |item|
+            page.should have_selector("li##{item.id}", 
+                                      text: item.content)
+          end
         end
       end
     end
